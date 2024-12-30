@@ -1,6 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.views import View
+from django.views.generic import ListView
+from django.views.generic import TemplateView
+from django.db.models import Q
 from .models import (
     FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost,
     AdminApprovalRequest, Organization
@@ -127,3 +130,76 @@ def organizer_dashboard(request):
     else:
         messages.error(request, "You are not an organizer.")
         return redirect('home')
+
+
+
+# display after vesion updated at 10.15 PM monday 12-30-2024
+
+from django.db.models import Q
+from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.views.generic import TemplateView
+from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+
+from django.views.generic import TemplateView
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+
+
+
+class AllPostsView(TemplateView):
+    template_name = 'all_posts.html'
+
+    def get(self, request, *args, **kwargs):
+        # Fetch posts from each category
+        food_posts = FoodAndBeveragePost.objects.all()
+        hall_posts = ConversationHallPost.objects.all()
+        activity_posts = FunAndActivitiesPost.objects.all()
+
+        # Normalize data across different models
+        posts = []
+
+        # Food & Beverage
+        for post in food_posts:
+            posts.append({
+                'id': post.id,
+                'title': post.title,
+                'description': post.description,
+                'image': post.image.url if post.image else None,
+                'price': post.price,  # Assuming 'price' is directly available
+                'type': 'Food & Beverage',
+            })
+
+        # Conversation Hall
+        for post in hall_posts:
+            posts.append({
+                'id': post.id,
+                'title': post.title,
+                'description': post.description,
+                'image': post.images.url if post.images else None,
+                'price': post.price_per_hour,  # Map price_per_hour to 'price'
+                'type': 'Conversation Hall',
+            })
+
+        # Fun & Activities
+        for post in activity_posts:
+            posts.append({
+                'id': post.id,
+                'title': post.title,
+                'description': post.description,
+                'image': post.image.url if post.image else None,
+                'price': post.price,
+                'type': 'Fun & Activities',
+            })
+
+        # Pagination
+        paginator = Paginator(posts, 6)  # Show 6 posts per page
+        page = request.GET.get('page')
+        paginated_posts = paginator.get_page(page)
+
+        context = {
+            'posts': paginated_posts,
+        }
+        return render(request, self.template_name, context)
