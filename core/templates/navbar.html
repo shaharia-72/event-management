@@ -1,0 +1,47 @@
+<nav class="bg-gray-900 text-white py-4">
+  <div class="container mx-auto flex justify-between items-center">
+    <!-- Left Side -->
+    <div class="flex items-center space-x-6">
+      <a href="{% url 'home' %}" class="text-xl font-bold text-white">Home</a>
+
+      {% if user.is_authenticated %}
+        <a href="#" class="text-lg font-bold text-white">Dashboard</a>
+
+        {% if user.is_organizer %}
+          {% if food_approval_status == 'Approved' %}
+            <a href="{% url 'create_post' post_type='food_and_beverage' %}" class="text-lg font-bold text-white">Add Food and Beverage</a>
+          {% endif %}
+          {% if hall_approval_status == 'Approved' %}
+            <a href="{% url 'create_post' post_type='conversation_hall' %}" class="text-lg font-bold text-white">Add Conversation Hall</a>
+          {% endif %}
+          {% if activity_approval_status == 'Approved' %}
+            <a href="{% url 'create_post' post_type='fun_and_activities' %}" class="text-lg font-bold text-white">Add Fun and Activities</a>
+          {% endif %}
+        {% endif %}
+
+        {% if user.is_participant %}
+          <a href="#" class="text-lg font-bold text-white">Organized Events</a>
+          <a href="#" class="text-lg font-bold text-white">History</a>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Right Side -->
+    <div class="flex items-center space-x-6">
+      {% if user.is_authenticated %}
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-user-circle text-xl"></i>
+          {% if user.is_organizer %}
+            <a href="{% url 'organizer_profile' %}" class="font-bold text-white">{{ user.username }}</a>
+          {% elif user.is_participant %}
+            <a href="{% url 'participant_profile' %}" class="font-bold text-white">{{ user.username }}</a>
+          {% endif %}
+        </div>
+        <a href="{% url 'logout' %}" class="text-lg font-bold text-white">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="text-lg font-bold text-white">Login</a>
+        <a href="{% url 'register' %}" class="text-lg font-bold text-white">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>

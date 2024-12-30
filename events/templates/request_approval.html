@@ -1,0 +1,121 @@
+{% extends 'base_profile.html' %} {% load widget_tweaks %} {% block title %}
+  <title>Profile</title>
+{% endblock %} {% block content %}
+  <div class="container mt-5">
+    <h2 class="mb-4">Request Admin Approval</h2>
+
+    <!-- Food and Beverage -->
+    <div class="mb-3">
+      <p>Feature: Food and Beverage</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+          name="tag"
+          value="food_and_beverage"
+          class="btn {% if food_approval_status == 'Approved' %}
+            
+            
+            
+            btn-success
+
+
+
+          {% elif food_approval_status == 'Pending' %}
+            
+            
+            
+            btn-warning
+
+
+
+          {% else %}
+            
+            
+            
+            btn-secondary
+
+
+
+          {% endif %}">
+          {{ food_approval_status }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Conversation Hall -->
+    <div class="mb-3">
+      <p>Feature: Conversation Hall</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+          name="tag"
+          value="conversation_hall"
+          class="btn {% if hall_approval_status == 'Approved' %}
+            
+            
+            
+            btn-success
+
+
+
+          {% elif hall_approval_status == 'Pending' %}
+            
+            
+            
+            btn-warning
+
+
+
+          {% else %}
+            
+            
+            
+            btn-secondary
+
+
+
+          {% endif %}">
+          {{ hall_approval_status }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Fun and Activities -->
+    <div class="mb-3">
+      <p>Feature: Fun and Activities</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+          name="tag"
+          value="fun_and_activities"
+          class="btn {% if activity_approval_status == 'Approved' %}
+            
+            
+            
+            btn-success
+
+
+
+          {% elif activity_approval_status == 'Pending' %}
+            
+            
+            
+            btn-warning
+
+
+
+          {% else %}
+            
+            
+            
+            btn-secondary
+
+
+
+          {% endif %}">
+          {{ activity_approval_status }}
+        </button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
