@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import RequestAdminApprovalView, AllPostsView
+from .views import RequestAdminApprovalView, AllPostsView, PostDetailView, PostDeleteView
 
 urlpatterns = [
     # Function-based views for post creation, update, and deletion
@@ -13,5 +13,8 @@ urlpatterns = [
     
     # Class-based view for displaying all posts with pagination and filters
     path('all_posts/', AllPostsView.as_view(), name='all_posts'),
+    path('post/<str:post_type>/<int:pk>/', PostDetailView.as_view(), name='post_detail'),
+    # path('post/<str:post_type>/<int:pk>/', PostDetailView.as_view(), name='post_detail'),
+    path('post/<str:post_type>/delete/<int:pk>/', PostDeleteView.as_view(), name='post_delete'),
     # path('post/<int:pk>/', views.PostDetailView.as_view(), name='post_detail'),
 ]

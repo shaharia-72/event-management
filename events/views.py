@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic import TemplateView
@@ -146,44 +147,120 @@ from django.views.generic import TemplateView
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+from django.views.generic import DetailView, UpdateView
+from .models import PostFeedback
+from django.http import HttpResponseRedirect
+from django.views.generic import DeleteView
+from django.contrib.contenttypes.models import ContentType
 
 
 
-class AllPostsView(TemplateView):
+# class AllPostsView(TemplateView):
+#     template_name = 'all_posts.html'
+
+#     def get(self, request, *args, **kwargs):
+#         # Fetch posts from each category
+#         food_posts = FoodAndBeveragePost.objects.all()
+#         hall_posts = ConversationHallPost.objects.all()
+#         activity_posts = FunAndActivitiesPost.objects.all()
+
+#         # Normalize data across different models
+#         posts = []
+
+#         # Food & Beverage
+#         for post in food_posts:
+#             posts.append({
+#                 'id': post.id,
+#                 'title': post.title,
+#                 'description': post.description,
+#                 'image': post.image.url if post.image else None,
+#                 'price': post.price,  # Assuming 'price' is directly available
+#                 'type': 'Food & Beverage',
+#             })
+
+#         # Conversation Hall
+#         for post in hall_posts:
+#             posts.append({
+#                 'id': post.id,
+#                 'title': post.title,
+#                 'description': post.description,
+#                 'image': post.images.url if post.images else None,
+#                 'price': post.price_per_hour,  # Map price_per_hour to 'price'
+#                 'type': 'Conversation Hall',
+#             })
+
+#         # Fun & Activities
+#         for post in activity_posts:
+#             posts.append({
+#                 'id': post.id,
+#                 'title': post.title,
+#                 'description': post.description,
+#                 'image': post.image.url if post.image else None,
+#                 'price': post.price,
+#                 'type': 'Fun & Activities',
+#             })
+
+#         # Pagination
+#         paginator = Paginator(posts, 6)  # Show 6 posts per page
+#         page = request.GET.get('page')
+#         paginated_posts = paginator.get_page(page)
+
+#         context = {
+#             'posts': paginated_posts,
+#         }
+#         return render(request, self.template_name, context)
+    
+
+
+# Common function to fetch post based on type
+def get_post_and_form(post_type, pk):
+    if post_type == 'food_and_beverage':
+        post = get_object_or_404(FoodAndBeveragePost, pk=pk)
+        form_class = FoodAndBeveragePostForm
+    elif post_type == 'conversation_hall':
+        post = get_object_or_404(ConversationHallPost, pk=pk)
+        form_class = ConversationHallPostForm
+    elif post_type == 'fun_and_activities':
+        post = get_object_or_404(FunAndActivitiesPost, pk=pk)
+        form_class = FunAndActivitiesPostForm
+    else:
+        raise ValueError("Invalid Post Type")
+    return post, form_class
+
+# Class-based view for all posts
+class AllPostsView(View):
     template_name = 'all_posts.html'
 
-    def get(self, request, *args, **kwargs):
-        # Fetch posts from each category
+    def get(self, request):
+        # Fetch all posts and normalize data
+        posts = []
+
+        # Fetch from all models
         food_posts = FoodAndBeveragePost.objects.all()
         hall_posts = ConversationHallPost.objects.all()
         activity_posts = FunAndActivitiesPost.objects.all()
 
-        # Normalize data across different models
-        posts = []
-
-        # Food & Beverage
+        # Combine data
         for post in food_posts:
             posts.append({
                 'id': post.id,
                 'title': post.title,
                 'description': post.description,
                 'image': post.image.url if post.image else None,
-                'price': post.price,  # Assuming 'price' is directly available
-                'type': 'Food & Beverage',
+                'price': post.price,
+                'type': 'food_and_beverage'
             })
 
-        # Conversation Hall
         for post in hall_posts:
             posts.append({
                 'id': post.id,
                 'title': post.title,
                 'description': post.description,
                 'image': post.images.url if post.images else None,
-                'price': post.price_per_hour,  # Map price_per_hour to 'price'
-                'type': 'Conversation Hall',
+                'price': post.price_per_hour,
+                'type': 'conversation_hall'
             })
 
-        # Fun & Activities
         for post in activity_posts:
             posts.append({
                 'id': post.id,
@@ -191,15 +268,83 @@ class AllPostsView(TemplateView):
                 'description': post.description,
                 'image': post.image.url if post.image else None,
                 'price': post.price,
-                'type': 'Fun & Activities',
+                'type': 'fun_and_activities'
             })
 
         # Pagination
-        paginator = Paginator(posts, 6)  # Show 6 posts per page
+        paginator = Paginator(posts, 6)
         page = request.GET.get('page')
         paginated_posts = paginator.get_page(page)
 
-        context = {
-            'posts': paginated_posts,
-        }
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, {'posts': paginated_posts})
+    
+
+
+# The combined Detail and Update View
+class PostDetailView(DetailView, UpdateView):
+    template_name = 'post_detail.html'
+    
+    def get_object(self, queryset=None):
+        post_type = self.kwargs['post_type']
+        pk = self.kwargs['pk']
+        post, _ = get_post_and_form(post_type, pk)
+        return post
+
+    def get_form_class(self):
+        _, form_class = get_post_and_form(self.kwargs['post_type'], self.kwargs['pk'])
+        return form_class
+
+    def post(self, request, *args, **kwargs):
+        post = self.get_object()
+
+        if 'reply_feedback' in request.POST:
+            feedback = request.POST.get('feedback_text')
+
+            # Create feedback dynamically for any post type
+            PostFeedback.objects.create(
+                content_type=ContentType.objects.get_for_model(post),
+                object_id=post.id,
+                feedback_text=feedback,
+                participant=request.user.participant  # Ensure `Participant` user is set up
+            )
+            messages.success(request, 'Feedback posted successfully!')
+            return HttpResponseRedirect(
+                reverse_lazy('post_detail', kwargs={'post_type': kwargs['post_type'], 'pk': kwargs['pk']})
+            )
+
+        # Handle updates using the parent method
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        post = self.get_object()
+
+        # Retrieve feedbacks based on generic relation
+        content_type = ContentType.objects.get_for_model(post)
+        context['feedbacks'] = PostFeedback.objects.filter(
+            content_type=content_type,
+            object_id=post.id
+        )
+
+        context['edit_mode'] = 'edit' in self.request.GET
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('post_detail', kwargs={
+            'post_type': self.kwargs['post_type'],
+            'pk': self.kwargs['pk']
+        })
+    
+class PostDeleteView(DeleteView):
+    model = FoodAndBeveragePost  # Adjust based on your post type
+    template_name = 'post_confirm_delete.html'
+    
+    def get_success_url(self):
+        messages.success(self.request, 'Post deleted successfully!')
+        return reverse_lazy('all_posts')
+
+    def delete(self, request, *args, **kwargs):
+        post = self.get_object()
+        post.delete()
+        messages.success(request, 'Post deleted successfully!')
+        return super().delete(request, *args, **kwargs)

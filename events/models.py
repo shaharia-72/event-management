@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 from accounts.models import CustomUser
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 class Organization(models.Model):
@@ -122,3 +124,21 @@ class FunAndActivitiesPost(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class PostFeedback(models.Model):
+    # Generic Foreign Key to allow multiple models (Food, Hall, Activities)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)  # Model type (Food, Hall, Activity)
+    object_id = models.PositiveIntegerField()  # ID of the instance
+    post = GenericForeignKey('content_type', 'object_id')  # Combine the two above
+
+    participant = models.ForeignKey(
+        'accounts.Participant',
+        on_delete=models.CASCADE,
+        related_name='feedbacks'
+    )
+    feedback_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback by {self.participant.user.username} on {self.post}"
