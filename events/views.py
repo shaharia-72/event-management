@@ -10,6 +10,22 @@ from .models import (
     AdminApprovalRequest, Organization
 )
 from .forms import FoodAndBeveragePostForm, ConversationHallPostForm, FunAndActivitiesPostForm
+from django.db.models import Q
+from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from django.views.generic import TemplateView
+from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+
+from django.views.generic import TemplateView
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
+from django.views.generic import DetailView, UpdateView
+from .models import PostFeedback
+from django.http import HttpResponseRedirect
+from django.views.generic import DeleteView
+from django.contrib.contenttypes.models import ContentType
 
 # Create Post View
 def create_post(request, post_type):
@@ -98,7 +114,8 @@ class RequestAdminApprovalView(View):
         context = {
             'food_approval_status': food_approval_status,
             'hall_approval_status': hall_approval_status,
-            'activity_approval_status': activity_approval_status
+            'activity_approval_status': activity_approval_status,
+            'active_page':'Unlock'
         }
         return render(request, self.template_name, context)
 
@@ -132,86 +149,6 @@ def organizer_dashboard(request):
         messages.error(request, "You are not an organizer.")
         return redirect('home')
 
-
-
-# display after vesion updated at 10.15 PM monday 12-30-2024
-
-from django.db.models import Q
-from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from django.views.generic import TemplateView
-from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
-
-from django.views.generic import TemplateView
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from .models import FoodAndBeveragePost, ConversationHallPost, FunAndActivitiesPost
-from django.views.generic import DetailView, UpdateView
-from .models import PostFeedback
-from django.http import HttpResponseRedirect
-from django.views.generic import DeleteView
-from django.contrib.contenttypes.models import ContentType
-
-
-
-# class AllPostsView(TemplateView):
-#     template_name = 'all_posts.html'
-
-#     def get(self, request, *args, **kwargs):
-#         # Fetch posts from each category
-#         food_posts = FoodAndBeveragePost.objects.all()
-#         hall_posts = ConversationHallPost.objects.all()
-#         activity_posts = FunAndActivitiesPost.objects.all()
-
-#         # Normalize data across different models
-#         posts = []
-
-#         # Food & Beverage
-#         for post in food_posts:
-#             posts.append({
-#                 'id': post.id,
-#                 'title': post.title,
-#                 'description': post.description,
-#                 'image': post.image.url if post.image else None,
-#                 'price': post.price,  # Assuming 'price' is directly available
-#                 'type': 'Food & Beverage',
-#             })
-
-#         # Conversation Hall
-#         for post in hall_posts:
-#             posts.append({
-#                 'id': post.id,
-#                 'title': post.title,
-#                 'description': post.description,
-#                 'image': post.images.url if post.images else None,
-#                 'price': post.price_per_hour,  # Map price_per_hour to 'price'
-#                 'type': 'Conversation Hall',
-#             })
-
-#         # Fun & Activities
-#         for post in activity_posts:
-#             posts.append({
-#                 'id': post.id,
-#                 'title': post.title,
-#                 'description': post.description,
-#                 'image': post.image.url if post.image else None,
-#                 'price': post.price,
-#                 'type': 'Fun & Activities',
-#             })
-
-#         # Pagination
-#         paginator = Paginator(posts, 6)  # Show 6 posts per page
-#         page = request.GET.get('page')
-#         paginated_posts = paginator.get_page(page)
-
-#         context = {
-#             'posts': paginated_posts,
-#         }
-#         return render(request, self.template_name, context)
-    
-
-
 # Common function to fetch post based on type
 def get_post_and_form(post_type, pk):
     if post_type == 'food_and_beverage':
@@ -227,49 +164,74 @@ def get_post_and_form(post_type, pk):
         raise ValueError("Invalid Post Type")
     return post, form_class
 
-# Class-based view for all posts
 class AllPostsView(View):
-    template_name = 'all_posts.html'
+    template_name = 'home.html'
 
     def get(self, request):
-        # Fetch all posts and normalize data
+        # Get query parameters
+        category = request.GET.get('category')
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        search_query = request.GET.get('search')
+
+        # Filter posts dynamically
         posts = []
+        if not category or category == 'food_and_beverage':
+            food_posts = FoodAndBeveragePost.objects.all()
+            if min_price:
+                food_posts = food_posts.filter(price__gte=min_price)
+            if max_price:
+                food_posts = food_posts.filter(price__lte=max_price)
+            if search_query:
+                food_posts = food_posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query))
 
-        # Fetch from all models
-        food_posts = FoodAndBeveragePost.objects.all()
-        hall_posts = ConversationHallPost.objects.all()
-        activity_posts = FunAndActivitiesPost.objects.all()
-
-        # Combine data
-        for post in food_posts:
-            posts.append({
+            posts += [{
                 'id': post.id,
                 'title': post.title,
                 'description': post.description,
                 'image': post.image.url if post.image else None,
                 'price': post.price,
                 'type': 'food_and_beverage'
-            })
+            } for post in food_posts]
 
-        for post in hall_posts:
-            posts.append({
+        # Repeat similar filtering for other categories
+        # Conversation Hall
+        if not category or category == 'conversation_hall':
+            hall_posts = ConversationHallPost.objects.all()
+            if min_price:
+                hall_posts = hall_posts.filter(price_per_hour__gte=min_price)
+            if max_price:
+                hall_posts = hall_posts.filter(price_per_hour__lte=max_price)
+            if search_query:
+                hall_posts = hall_posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query))
+
+            posts += [{
                 'id': post.id,
                 'title': post.title,
                 'description': post.description,
                 'image': post.images.url if post.images else None,
                 'price': post.price_per_hour,
                 'type': 'conversation_hall'
-            })
+            } for post in hall_posts]
 
-        for post in activity_posts:
-            posts.append({
+        # Fun & Activities
+        if not category or category == 'fun_and_activities':
+            activity_posts = FunAndActivitiesPost.objects.all()
+            if min_price:
+                activity_posts = activity_posts.filter(price__gte=min_price)
+            if max_price:
+                activity_posts = activity_posts.filter(price__lte=max_price)
+            if search_query:
+                activity_posts = activity_posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query))
+
+            posts += [{
                 'id': post.id,
                 'title': post.title,
                 'description': post.description,
                 'image': post.image.url if post.image else None,
                 'price': post.price,
                 'type': 'fun_and_activities'
-            })
+            } for post in activity_posts]
 
         # Pagination
         paginator = Paginator(posts, 6)
@@ -277,7 +239,6 @@ class AllPostsView(View):
         paginated_posts = paginator.get_page(page)
 
         return render(request, self.template_name, {'posts': paginated_posts})
-    
 
 
 # The combined Detail and Update View
@@ -326,6 +287,7 @@ class PostDetailView(DetailView, UpdateView):
             object_id=post.id
         )
 
+        context['post_type'] = self.kwargs['post_type']
         context['edit_mode'] = 'edit' in self.request.GET
         return context
 
@@ -336,15 +298,17 @@ class PostDetailView(DetailView, UpdateView):
         })
     
 class PostDeleteView(DeleteView):
-    model = FoodAndBeveragePost  # Adjust based on your post type
     template_name = 'post_confirm_delete.html'
-    
+
+    def get_object(self, queryset=None):
+        # Dynamically fetch the correct model based on post_type
+        post_type = self.kwargs['post_type']
+        pk = self.kwargs['pk']
+        post, _ = get_post_and_form(post_type, pk)  # Reuse existing helper function
+        return post
+
     def get_success_url(self):
         messages.success(self.request, 'Post deleted successfully!')
-        return reverse_lazy('all_posts')
-
-    def delete(self, request, *args, **kwargs):
-        post = self.get_object()
-        post.delete()
-        messages.success(request, 'Post deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+        # Redirect to the list view of posts after deletion
+        post_type = self.kwargs.get('post_type')
+        return reverse_lazy('all_posts', kwargs={'post_type': post_type})

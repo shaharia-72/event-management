@@ -1,121 +1,198 @@
-{% extends 'base_profile.html' %} {% load widget_tweaks %} {% block title %}
+{% extends 'base_profile.html' %}
+{% load widget_tweaks %}
+{% block title %}
   <title>Profile</title>
-{% endblock %} {% block content %}
-  <div class="container mt-5">
-    <h2 class="mb-4">Request Admin Approval</h2>
+{% endblock %}
 
-    <!-- Food and Beverage -->
-    <div class="mb-3">
-      <p>Feature: Food and Beverage</p>
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit"
-          name="tag"
-          value="food_and_beverage"
-          class="btn {% if food_approval_status == 'Approved' %}
-            
-            
-            
-            btn-success
+{% block content %}
+  <div class="container mt-2">
+    <h2 class="mb-2 text-center text-dark font-weight-bold">Request Admin Approval</h2>
 
-
-
-          {% elif food_approval_status == 'Pending' %}
-            
-            
-            
-            btn-warning
+    <div class="row">
+      <!-- Food and Beverage -->
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-lg rounded-lg border-0">
+          <div class="card-body text-center">
+            <h4 class="card-title text-uppercase text-dark">Food and Beverage</h4>
+            <p class="card-text mb-4 text-muted">Feature: Food and Beverage</p>
+            <form method="post">
+              {% csrf_token %}
+              <button type="submit"
+                name="tag"
+                value="food_and_beverage"
+                class="btn w-100 {% if food_approval_status == 'Approved' %}
+                  
+                  
+                   btn-success
 
 
-
-          {% else %}
-            
-            
-            
-            btn-secondary
+                {% elif food_approval_status == 'Pending' %}
+                  
+                  
+                   btn-warning
 
 
-
-          {% endif %}">
-          {{ food_approval_status }}
-        </button>
-      </form>
-    </div>
-
-    <!-- Conversation Hall -->
-    <div class="mb-3">
-      <p>Feature: Conversation Hall</p>
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit"
-          name="tag"
-          value="conversation_hall"
-          class="btn {% if hall_approval_status == 'Approved' %}
-            
-            
-            
-            btn-success
+                {% else %}
+                  
+                  
+                   btn-secondary
 
 
+                {% endif %} btn-lg rounded-pill shadow-sm">
+                <strong>{{ food_approval_status }}</strong>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-          {% elif hall_approval_status == 'Pending' %}
-            
-            
-            
-            btn-warning
-
-
-
-          {% else %}
-            
-            
-            
-            btn-secondary
-
-
-
-          {% endif %}">
-          {{ hall_approval_status }}
-        </button>
-      </form>
-    </div>
-
-    <!-- Fun and Activities -->
-    <div class="mb-3">
-      <p>Feature: Fun and Activities</p>
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit"
-          name="tag"
-          value="fun_and_activities"
-          class="btn {% if activity_approval_status == 'Approved' %}
-            
-            
-            
-            btn-success
+      <!-- Conversation Hall -->
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-lg rounded-lg border-0">
+          <div class="card-body text-center">
+            <h4 class="card-title text-uppercase text-dark">Conversation Hall</h4>
+            <p class="card-text mb-4 text-muted">Feature: Conversation Hall</p>
+            <form method="post">
+              {% csrf_token %}
+              <button type="submit"
+                name="tag"
+                value="conversation_hall"
+                class="btn w-100 {% if hall_approval_status == 'Approved' %}
+                  
+                  
+                   btn-success
 
 
-
-          {% elif activity_approval_status == 'Pending' %}
-            
-            
-            
-            btn-warning
+                {% elif hall_approval_status == 'Pending' %}
+                  
+                  
+                   btn-warning
 
 
-
-          {% else %}
-            
-            
-            
-            btn-secondary
+                {% else %}
+                  
+                  
+                   btn-secondary
 
 
+                {% endif %} btn-lg rounded-pill shadow-sm">
+                <strong>{{ hall_approval_status }}</strong>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-          {% endif %}">
-          {{ activity_approval_status }}
-        </button>
-      </form>
+      <!-- Fun and Activities -->
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-lg rounded-lg border-0">
+          <div class="card-body text-center">
+            <h4 class="card-title text-uppercase text-dark">Fun and Activities</h4>
+            <p class="card-text mb-4 text-muted">Feature: Fun and Activities</p>
+            <form method="post">
+              {% csrf_token %}
+              <button type="submit"
+                name="tag"
+                value="fun_and_activities"
+                class="btn w-100 {% if activity_approval_status == 'Approved' %}
+                  
+                  
+                   btn-success
+
+
+                {% elif activity_approval_status == 'Pending' %}
+                  
+                  
+                   btn-warning
+
+
+                {% else %}
+                  
+                  
+                   btn-secondary
+
+
+                {% endif %} btn-lg rounded-pill shadow-sm">
+                <strong>{{ activity_approval_status }}</strong>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <style>
+    h2 {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    
+    .card {
+      background-color: #f8f9fa;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card-body {
+      padding: 2.5rem;
+      position: relative;
+    }
+    
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 1px;
+    }
+    
+    .card-text {
+      font-size: 1rem;
+      color: #6c757d;
+    }
+    
+    .btn {
+      font-size: 1.2rem;
+      padding: 12px;
+    }
+    
+    .btn-lg {
+      font-size: 1.4rem;
+      padding: 16px;
+    }
+    
+    .rounded-pill {
+      border-radius: 50px !important;
+    }
+    
+    /* Hover Effects */
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+      transition: opacity 0.3s ease-in-out;
+    }
+    
+    /* Custom Shadows for Buttons */
+    .btn-success,
+    .btn-warning,
+    .btn-secondary {
+      box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-success:hover {
+      box-shadow: 0px 10px 15px rgba(0, 128, 0, 0.2);
+    }
+    
+    .btn-warning:hover {
+      box-shadow: 0px 10px 15px rgba(255, 165, 0, 0.2);
+    }
+    
+    .btn-secondary:hover {
+      box-shadow: 0px 10px 15px rgba(108, 117, 125, 0.2);
+    }
+  </style>
 {% endblock %}
